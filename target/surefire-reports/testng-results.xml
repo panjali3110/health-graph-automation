@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="1" passed="1" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2022-11-01T19:47:10 IST" name="Suite1" finished-at="2022-11-01T19:47:13 IST" duration-ms="2698">
+    <groups>
+    </groups>
+    <test started-at="2022-11-01T19:47:10 IST" name="UIAutomationTest" finished-at="2022-11-01T19:47:13 IST" duration-ms="2698">
+      <class name="com.example.AppTest">
+        <test-method is-config="true" signature="launchApp()[pri:0, instance:com.example.AppTest@418e7838]" started-at="2022-11-01T19:47:10 IST" name="launchApp" finished-at="2022-11-01T19:47:13 IST" duration-ms="2554" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- launchApp -->
+        <test-method signature="validateTransactionTest()[pri:0, instance:com.example.AppTest@418e7838]" started-at="2022-11-01T19:47:13 IST" name="validateTransactionTest" finished-at="2022-11-01T19:47:13 IST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- validateTransactionTest -->
+        <test-method is-config="true" signature="terminateTest()[pri:0, instance:com.example.AppTest@418e7838]" started-at="2022-11-01T19:47:13 IST" name="terminateTest" finished-at="2022-11-01T19:47:13 IST" duration-ms="124" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- terminateTest -->
+      </class> <!-- com.example.AppTest -->
+    </test> <!-- UIAutomationTest -->
+  </suite> <!-- Suite1 -->
+</testng-results>
