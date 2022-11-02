@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.checkerframework.checker.units.qual.C;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -16,6 +17,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.Select;
 
 /**
@@ -23,7 +25,7 @@ import org.openqa.selenium.support.ui.Select;
  */
 public class AppTest 
 {
-    WebDriver driver;
+    RemoteWebDriver driver;
     /**
      * Rigorous Test :-)
      */
@@ -43,7 +45,7 @@ public class AppTest
     @BeforeTest
     public void launchApp() throws InterruptedException {
         
-        String chromeDriverPath = System.getProperty("user.dir").replace('\\', '/') + getChromeDriverPath();
+        String chromeDriverPath = System.getProperty("user.dir") + getChromeDriverPath();
         System.setProperty("webdriver.chrome.driver", chromeDriverPath);
         driver = new ChromeDriver();
        // Puts an Implicit wait, Will wait for 10 seconds before throwing exception
@@ -55,90 +57,77 @@ public class AppTest
     }
 
     @Test
-    public void validateTransactionTest()
+    public void validateTransactionTest() throws InterruptedException
     {
-        driver.findElement(By.xpath("//*[text()='ONLINE BANKING LOGIN']")).click();
+        Login login = new Login(driver);
 
-        WebElement incorrectusername = driver.findElement(By.id("uid"));
-        incorrectusername.sendKeys("demo_user");
+        //perform login with incorrect user
+        login.PerformLogin("demo_password", "demo_password");
 
-        WebElement incorrectpassword = driver.findElement(By.id("passw"));
-        incorrectpassword.sendKeys("demo_password");
+        // Verify User login failed
+        Assert.assertTrue(login.VerifyUserLoggedFailed(), "Assertion for login failed.");
 
-        WebElement loginbtn = driver.findElement(By.name("btnSubmit"));
-        loginbtn.click();
+        //perform login with correct user
+        login.PerformLogin("admin", "admin");
 
-        WebElement correctusername = driver.findElement(By.id("uid"));
-        correctusername.sendKeys("admin");
+        // Verify User login succeeded 
+        Assert.assertTrue(login.VerifyUserLoggedIn(), "Assertion for login succeeded.");
 
-        WebElement correctpassword = driver.findElement(By.id("passw"));
-        correctpassword.sendKeys("admin");
-        
-        loginbtn = driver.findElement(By.name("btnSubmit"));
-        loginbtn.click();
+        MyAccount myAccount = new MyAccount(driver);
 
-        Assert.assertTrue(driver.findElement(By.xpath("//*[contains(text(),'Hello Admin User')]")).isDisplayed());
+        //Open checkin Account
+        myAccount.openCheckinAccount();
 
-        WebElement viewaccsum = driver.findElement(By.linkText("View Account Summary"));
-        viewaccsum.click();
-
-        Select accdetail = new Select(driver.findElement(By.id("listAccounts")));
-		accdetail.selectByVisibleText("800001 Checking");
-		
-        driver.findElement(By.id("btnGetAccount")).click();
-        
-        WebElement availableBalance = driver.findElement(By.xpath("//td[contains(text(), 'Available balance')]/following-sibling::td"));
-
-        System.out.println(availableBalance.getText());
-        String expectedData = "$100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.00";
-
-        Assert.assertTrue(availableBalance.getText().contains(expectedData));
-        
-        driver.findElement(By.linkText("Transfer Funds")).click();
-
-        Select fromacc = new Select(driver.findElement(By.id("fromAccount")));
-		fromacc.selectByVisibleText("800000 Corporate");
-
-        Select toacc = new Select(driver.findElement(By.id("toAccount")));
-		toacc.selectByVisibleText("800001 Checking");
+        //Verify Available balance is showing
+        Assert.assertTrue(myAccount.VerifyAvailableBalance(), "Assertion for Available balance is showing.");
 
         String transferAmount = "9876.0";
+        FundTransfer fundTransfer = new FundTransfer(driver);
 
-        driver.findElement(By.id("transferAmount")).sendKeys(transferAmount);
+        //Transfer fund from corporate to checking
+        fundTransfer.TransferFundFromCorporateToChecking(transferAmount);
 
-        driver.findElement(By.id("transfer")).click();
+        //Verify fund transferred successfully
+        Assert.assertTrue(fundTransfer.VerifyFundTransfer(transferAmount), "Assertion for fund transferred successfully.");
 
-        WebElement successsMessageElement = driver.findElement(By.xpath("//span[@id='_ctl0__ctl0_Content_Main_postResp']/span"));
+        RecentTransactions recentTransactions = new RecentTransactions(driver);
 
-        Assert.assertTrue(successsMessageElement.getText().contains(transferAmount+" was successfully transferred from Account 800000 into Account 800001"));
+        // Go to recent Transactions
+        recentTransactions.goToRecentTransactions();
 
-        driver.findElement(By.linkText("View Recent Transactions")).click();
+        //Fetch Amount from first row of the transactions table
+        String firstTransactionAmount = recentTransactions.getFirstTransactionAmount();
 
-        WebElement firstRowAmountCellElement = driver.findElement(By.xpath("//table[@id='_ctl0__ctl0_Content_Main_MyTransactions']/tbody/tr[2]/td[5]"));
+        //Verify Amount from first row of the transactions table
+        Assert.assertTrue(firstTransactionAmount.contains(transferAmount), "Assertion for deposit amount has failed. Expected: " + transferAmount+" Actual: " + firstTransactionAmount);
+        
+        //Fetch Amount from second row of the transactions table
+        String secondTransactionAmount = recentTransactions.getSecondTransactionAmount();
 
-        Assert.assertTrue(firstRowAmountCellElement.getText().contains(transferAmount), "Assertion for deposit amount has failed. Expected: "+transferAmount+" Actual: "+firstRowAmountCellElement.getText());
+        //Verify Amount from second row of the transactions table
+        Assert.assertTrue(secondTransactionAmount.contains(transferAmount), "Assertion for Withdrawal amount has failed. Expected: " + transferAmount+" Actual: " + secondTransactionAmount);
 
-        WebElement secondRowAmountCellElement = driver.findElement(By.xpath("//table[@id='_ctl0__ctl0_Content_Main_MyTransactions']/tbody/tr[3]/td[5]"));
+        ContactUs contactUs = new ContactUs(driver);
 
-        Assert.assertTrue(secondRowAmountCellElement.getText().contains(transferAmount));
+        //click on Contact Us link from left menu
+        contactUs.goToContactUs();
 
-        driver.findElement(By.linkText("Contact Us")).click();
+        //Click on online form link
+        contactUs.goToOnlineForm();
 
-        driver.findElement(By.linkText("online form")).click();
+        //fill the feedback form and send it
+        contactUs.sendFeedback("test@email.com", "Subject Test", "Test Comment");
 
-        driver.findElement(By.name("email_addr")).sendKeys("test@email.com");
+        //Verify Thank you message
+        Assert.assertTrue(contactUs.verifyThankYouMessage(), "Assertion for Thank you message");
 
-        driver.findElement(By.name("subject")).sendKeys("Subject Test");
+        SignOff signOff = new SignOff(driver);
 
-        driver.findElement(By.name("comments")).sendKeys("Test Comment");
+        //Click sign off
+        signOff.clickSignOff();
 
-        driver.findElement(By.name("submit")).click();
-
-        Assert.assertTrue(driver.findElement(By.xpath("//*[contains(text(),'Thank you for your comments, Admin User.')]")).isDisplayed(), "Assertion for Thank you message is not displayed.");
-
-        driver.findElement(By.xpath("//*[text()='Sign Off']")).click();
-
-        Assert.assertTrue(driver.findElement(By.xpath("//*[text()='Sign In']")).isDisplayed(), "Assertion for Sign Off.");
+        //Verify user signed off
+        Assert.assertTrue(signOff.verifyUserSignedOff(), "Assertion for Sign Off.");
 
     }
 
